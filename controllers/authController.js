@@ -4,24 +4,30 @@ const User = require('../models/User');
 require('dotenv').config();
 
 const generateToken = (user) => {
-  const payload = {
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.roles,
-    },
-  };
   const options = {
     expiresIn: '1h',
   };
-  return jwt.sign(payload, process.env.JWT_SECRET, options);
+  return jwt.sign(
+    {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      roles: user.roles,
+    },
+    process.env.JWT_SECRET,
+    options,
+  );
 };
 
 const authController = {
   signup: async (req, res) => {
     try {
       const newUser = new User(req.body);
+      if (newUser.password.length < 6) {
+        return res.status(400).json({
+          message: 'La contraseña debe tener al menos 6 caracteres',
+        });
+      }
       await newUser.save();
       const token = generateToken(newUser);
 

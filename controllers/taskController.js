@@ -1,5 +1,18 @@
 const Task = require('../models/Task');
 
+// MIDDLEWARE ROLES
+const authorizeAdmin = (req, res, next) => {
+  const currentUser = req.user;
+  console.log(currentUser);
+  // Verificar si el usuario tiene el rol 'ADMIN'
+  if (currentUser && currentUser.roles.includes('ADMIN')) {
+    // Si el usuario es 'ADMIN', permitimos el acceso a la función updateTask
+    next();
+  } else {
+    res.status(403).json({ message: ' No tienes permiso para editar esta tarea' });
+  }
+};
+
 const taskController = {
   createTask: async (req, res) => {
     try {
@@ -54,32 +67,35 @@ const taskController = {
       });
     }
   },
-  updateTask: async (req, res) => {
-    try {
-      const { id } = req.params;
-      if (id.length !== 24) {
-        return res.status(404).json({
-          msg: 'Id de usuario no válido',
-          status: 404,
-        });
-      }
-      const { estado } = req.body;
-      if (!['pendiente', 'en progreso', 'completada'].includes(estado)) {
-        throw new Error('Estado no proporcionado');
-      }
-      const task = await Task.findByIdAndUpdate(id, req.body, { new: true });
+  updateTask: [
+    authorizeAdmin,
+    async (req, res) => {
+      try {
+        const { id } = req.params;
+        if (id.length !== 24) {
+          return res.status(404).json({
+            msg: 'Id de usuario no válido',
+            status: 404,
+          });
+        }
+        const { estado } = req.body;
+        if (!['pendiente', 'en progreso', 'completada'].includes(estado)) {
+          throw new Error('Estado no proporcionado');
+        }
+        const task = await Task.findByIdAndUpdate(id, req.body, { new: true });
 
-      if (task) {
-        res.status(200).json(task);
-      } else {
-        res.status(404).json({
-          message: 'Task not found',
-        });
+        if (task) {
+          res.status(200).json(task);
+        } else {
+          res.status(404).json({
+            message: 'Task not found',
+          });
+        }
+      } catch (error) {
+        res.status(400).send(error.message);
       }
-    } catch (error) {
-      res.status(400).send(error.message);
-    }
-  },
+    },
+  ],
   deleteTask: async (req, res) => {
     try {
       const { id } = req.params;
