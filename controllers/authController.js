@@ -52,7 +52,7 @@ const authController = {
       }
       const token = generateToken(user);
       res.status(200).json({
-        message: 'Usuario loggeado correctamente',
+        message: 'Sesión iniciada correctamente',
         token: token,
       });
     } catch (error) {
