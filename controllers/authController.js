@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
+require('dotenv').config();
 
 const generateToken = (user) => {
   const payload = {
@@ -8,7 +9,7 @@ const generateToken = (user) => {
       id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role,
+      role: user.roles,
     },
   };
   const options = {
@@ -25,8 +26,8 @@ const authController = {
       const token = generateToken(newUser);
 
       res.status(201).json({
-        token,
-        user: newUser,
+        message: 'Usuario registrado con exito',
+        token: token,
       });
     } catch {
       res.status(400).json({
@@ -36,8 +37,8 @@ const authController = {
   },
   login: async (req, res) => {
     try {
-      const { email, password } = req.body;
-      const user = await User.findOne({ email });
+      const { username, email, password } = req.body;
+      const user = (await User.findOne({ email })) ?? (await User.findOne({ username }));
       if (!user) {
         return res.status(401).json({
           message: 'Usuario no encontrado',
@@ -51,8 +52,8 @@ const authController = {
       }
       const token = generateToken(user);
       res.status(200).json({
-        token,
-        user,
+        message: 'Usuario loggeado correctamente',
+        token: token,
       });
     } catch (error) {
       res.status(400).json({
